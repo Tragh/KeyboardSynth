@@ -18,123 +18,6 @@ constexpr int SAMPLE_RATE = 44100;
 namespace bpy=boost::python;
 
 
-class SDrawer
-{
-public:
-	SDLDrawer &drawer;
-	std::vector< std::vector<std::atomic<float>> > waveform;
-	int width;
-	int old_mouse_x, old_mouse_y;
-	bool mouse_down;
-	bool mouse_downR;
-
-
-	explicit SDrawer(SDLDrawer &drawer_):
-		drawer(drawer_),
-		width(drawer.width),
-		waveform(2),
-		mouse_down(false),
-		mouse_downR(false)
-	{
-		
-		waveform.resize(2);
-		waveform[0]= std::vector<std::atomic<float>>(width);
-		waveform[1]= std::vector<std::atomic<float>>(width);
-		for(int i=0; i<width; ++i){
-			waveform[0][i]=0.5*( 0.5*sin(2*M_PI*i/width)) + 0.25*0.5*sin(4*M_PI*i/width) +0.25*sin(8*M_PI*i/width);
-			waveform[1][i]=0.5*sin(2*M_PI*i/width);
-		}
-	}
-
-	inline void SetPoint(int x, int y)
-	{
-		if(x<0 || x>= width)
-			return;
-	
-		if (mouse_down) waveform[0][x]=1.0*y/drawer.height - 0.5;
-	
-		if (mouse_downR) waveform[1][x]=1.0*y/drawer.height - 0.5;
-	}
-	
-
-
-	void MouseDown(int x, int y)
-	{
-		mouse_down=true;
-		old_mouse_x=x;
-		old_mouse_y=y;
-		MouseMove(x,y);
-	}
-	
-	void MouseDownR(int x, int y)
-	{
-		mouse_downR=true;
-		old_mouse_x=x;
-		old_mouse_y=y;
-		MouseMove(x,y);
-	}
-
-	void MouseMove(int x, int y)
-	{
-		if(!mouse_down && !mouse_downR)
-			return;
-			
-		int Dx = (x-old_mouse_x);
-		int Dy = (y-old_mouse_y);
-
-		old_mouse_x=x;
-		old_mouse_y=y;
-
-		if (Dx==0) {
-			SetPoint(x,y);
-			return;
-		}
-
-		int sign=(Dx>0)?1:-1;
-
-		for(int i=0; i<=sign*Dx; ++i)
-			SetPoint(x-i*sign,y-sign*i*Dy/Dx); // Dx != 0
-	}
-	
-
-
-	void MouseUp()
-	{
-		mouse_down=false;
-	}
-	
-	void MouseUpR()
-	{
-		mouse_downR=false;
-	}
-
-	void Draw()
-	{
-		for(int i=0; i<width; ++i) {
-			drawer.Colour(0,0,255);
-			drawer.DrawPoint(i,(waveform[0][i]+0.5)*drawer.height);
-		}
-		
-		for(int i=0; i<width; ++i) {
-			drawer.Colour(0,255,0);
-			drawer.DrawPoint(i,(waveform[1][i]+0.5)*drawer.height);
-		}
-	}
-	
-	float Wave(float ticks)
-	{
-		int x=(std::abs(ticks)*width);
-		x%=width;
-		return waveform[0][x];
-	}
-	float Wave2(float ticks)
-	{
-		int x=(std::abs(ticks)*width);
-		x%=width;
-		return waveform[1][x];
-	}
-
-};
 
 class PyPlayerInterface{
 	std::map<int,float> keymap;
@@ -221,13 +104,14 @@ int main(int argc, char* argv[])
 	//pythonReader.ExecFile("script.py");
 	sounder->SetBacking(pythonReader.ExtractBuffer());
 
-	SDL_Window *window;
+	std::shared_ptr<SDL_Window> window;
 	SDL_Renderer *renderer;
 	assertm(SDL_Init( SDL_INIT_VIDEO ) >= 0, "SDL2 failed to init video");
 	{
 		SDL_DisplayMode current;
 		SDL_GetCurrentDisplayMode(0, &current);
-		window=SDL_CreateWindow("Window Name",SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,current.w, current.h, SDL_WINDOW_MAXIMIZED | SDL_WINDOW_FULLSCREEN);
+		std::shared_ptr<SDL_Window> win(SDL_CreateWindow("Window Name",SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,current.w, current.h, SDL_WINDOW_MAXIMIZED | SDL_WINDOW_FULLSCREEN),SDL_DestroyWindow);
+		window=win;
 	}
 	SDLDrawer drawer(window);
 	//SDrawer sdrawer(drawer);
