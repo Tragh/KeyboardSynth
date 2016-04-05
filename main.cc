@@ -154,6 +154,10 @@ int main(int argc, char* argv[])
 						sounder->AddNote(event.key.keysym.sym,pythonReader.Player.GetKeymap(event.key.keysym.sym),1,SYNTHS::test);
 					}
 				}
+				
+				if(event.key.keysym.sym == SDLK_SPACE) {
+					sounder->RemoveAllNotes();
+				}
 
 				break;
 			case SDL_KEYUP:

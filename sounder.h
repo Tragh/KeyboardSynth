@@ -76,6 +76,7 @@ public:
 	void AddNote(uint32_t key, float frequency, float user_volume, const std::function<float(float,float)> &generator, double when=-1);
 
 	void RemoveNote(uint64_t key, double when=-1);
+	void RemoveAllNotes();
 	
 	void SetBacking(std::vector<int32_t> buffer);
 	void SetBacking(const std::vector<float> &buffer_);

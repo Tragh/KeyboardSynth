@@ -75,6 +75,13 @@ void Sounder::RemoveNote(uint64_t key, double when)
 	future_notes[time].push_back({false, key, 0, 0, NULL});
 }
 
+void Sounder::RemoveAllNotes()
+{
+	std::lock_guard<std::mutex> lock(callback_mutex);
+	for(auto &note : active_notes)
+		note.second->Deactivate();
+}
+
 void Sounder::SetBuffer(int32_t* stream32, int len)
 {
 	{
