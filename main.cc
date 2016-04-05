@@ -146,9 +146,13 @@ int main(int argc, char* argv[])
 			case SDL_KEYDOWN:
 
 				if(pythonReader.Player.GetKeymap(event.key.keysym.sym)!=0) {
-					logfile << pythonReader.Player.GetKeymap(event.key.keysym.sym) << " ";
-					sounder->AddNote(event.key.keysym.sym,pythonReader.Player.GetKeymap(event.key.keysym.sym),1,SYNTHS::test);
-
+					if(SDL_GetModState() & KMOD_CAPS){
+						logfile << pythonReader.Player.GetKeymap(event.key.keysym.sym) << "(caps) ";
+						sounder->AddTerminatingNote(pythonReader.Player.GetKeymap(event.key.keysym.sym),1,SYNTHS::test,2);
+					}else{
+						logfile << pythonReader.Player.GetKeymap(event.key.keysym.sym) << " ";
+						sounder->AddNote(event.key.keysym.sym,pythonReader.Player.GetKeymap(event.key.keysym.sym),1,SYNTHS::test);
+					}
 				}
 
 				break;
